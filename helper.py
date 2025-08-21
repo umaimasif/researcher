@@ -37,11 +37,9 @@ class State(TypedDict):
 # -----------------------------
 
 def search_tavily_node(state: State):
-    search = TavilySearchResults(k=5)
-    response_json = search.run(state["query"])
-    print("🔍 Search Results:", response_json)
+    tool = TavilySearchResults() 
+    response_json = tool.invoke({"query": state["query"], "k": 5})  
     return {"search_results": response_json}
-
 
 def pick_best_articles_node(state: State):
     response_str = json.dumps(state["search_results"])
