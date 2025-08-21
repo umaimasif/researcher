@@ -7,6 +7,7 @@ langchain-google-genai
 google-generativeai
 tavily-python
 unstructured
+faiss-cpu
 chromadb
 requests
 beautifulsoup4

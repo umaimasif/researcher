@@ -71,7 +71,7 @@ def pick_best_articles_node(state: State):
     return {"urls": url_list}
 
 
-from langchain_community.vectorstores import Chroma
+from langchain_community.vectorstores import FAISS
 
 def extract_content_node(state: State):
     loader = UnstructuredURLLoader(urls=state["urls"])
@@ -80,7 +80,7 @@ def extract_content_node(state: State):
         separator="\n", chunk_size=1000, chunk_overlap=200, length_function=len
     )
     docs = text_splitter.split_documents(data)
-    db = Chroma.from_documents(docs, embeddings)  
+    db = FAISS.from_documents(docs, embeddings) 
     return {"db": db}
 
 
