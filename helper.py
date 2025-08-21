@@ -37,8 +37,12 @@ class State(TypedDict):
 # -----------------------------
 
 def search_tavily_node(state: State):
-    tool = TavilySearchResults() 
-    response_json = tool.invoke({"query": state["query"], "k": 5})  
+   
+    tavily_api_key = os.getenv("TAVILY_API_KEY")
+
+    tool = TavilySearchResults(api_key=tavily_api_key)  
+    response_json = tool.invoke({"query": state["query"], "k": 5})
+    
     return {"search_results": response_json}
 
 def pick_best_articles_node(state: State):
@@ -104,7 +108,7 @@ def generate_newsletter_node(state: State):
          
         End with:
         Umaima Asif
-        - Learner and Teacher
+        - Learner 
     """
     prompt_template = PromptTemplate(
         input_variables=["summaries_str", "query"], template=template
