@@ -15,11 +15,11 @@ from typing import TypedDict, List
 # Environment Setup
 # -----------------------------
 load_dotenv()
-gemini_key = os.getenv("GEMINI_API_KEY")
+google_api_key = os.getenv("GOOGLE_API_KEY")
 
 # Embeddings and LLM
-embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
-llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash", temperature=0)
+embeddings = GoogleGenerativeAIEmbeddings(api_key=google_api_key,model="models/embedding-001")
+llm = ChatGoogleGenerativeAI(api_key=google_api_key,model="gemini-1.5-flash", temperature=0)
 
 # -----------------------------
 # State Definition
