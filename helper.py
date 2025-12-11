@@ -3,11 +3,16 @@ import json
 from dotenv import load_dotenv
 from langchain_community.tools.tavily_search import TavilySearchResults
 from langchain_community.document_loaders import UnstructuredURLLoader
-from langchain.text_splitter import RecursiveCharacterTextSplitter as CharacterTextSplitter
 from langchain_community.vectorstores import FAISS
 from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
 from langgraph.graph import StateGraph, END
 from typing import TypedDict, List
+try:
+    # Newer versions
+    from langchain.text_splitter import RecursiveCharacterTextSplitter as CharacterTextSplitter
+except ModuleNotFoundError:
+    # Fallback for older versions
+    from langchain.text_splitter import CharacterTextSplitter
 
 # -----------------------------
 # Environment Setup
@@ -160,5 +165,6 @@ if __name__ == "__main__":
     query = "Latest AI breakthroughs in healthcare"
     final_state = app.invoke({"query": query})
     print("\n📩 Final Newsletter:\n", final_state["newsletter"])
+
 
 
