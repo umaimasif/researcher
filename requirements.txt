@@ -1,17 +1,18 @@
-streamlit
-python-dotenv
+python-dotenv==1.0.1
+streamlit==1.28.0
+langchain==0.1.247  
+langgraph==0.0.13
+langchain-community==0.0.25
+langchain-google-genai==0.0.8
+faiss-cpu==1.7.4
+unstructured==0.7.2
+numpy==1.26.0
+requests==2.31.0
 tavily-python
 chromadb
 beautifulsoup4
 lxml
-langchain
-langgraph
-langchain-community
-langchain-google-genai
-faiss-cpu
-unstructured
-numpy
-requests
+
 
 
 
