@@ -1,13 +1,11 @@
 import os
 import json
 from dotenv import load_dotenv
-from langchain.prompts import PromptTemplate
 from langchain_community.tools.tavily_search import TavilySearchResults
 from langchain_community.document_loaders import UnstructuredURLLoader
 from langchain.text_splitter import CharacterTextSplitter
-
+from langchain_community.vectorstores import FAISS
 from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
-
 from langgraph.graph import StateGraph, END
 from typing import TypedDict, List
 
@@ -18,8 +16,8 @@ load_dotenv()
 google_api_key = os.getenv("GOOGLE_API_KEY")
 
 # Embeddings and LLM
-embeddings = GoogleGenerativeAIEmbeddings(api_key=google_api_key,model="models/embedding-001")
-llm = ChatGoogleGenerativeAI(api_key=google_api_key,model="gemini-1.5-flash", temperature=0)
+embeddings = GoogleGenerativeAIEmbeddings(api_key=google_api_key, model="models/embedding-001")
+llm = ChatGoogleGenerativeAI(api_key=google_api_key, model="gemini-1.5-flash", temperature=0)
 
 # -----------------------------
 # State Definition
@@ -35,88 +33,103 @@ class State(TypedDict):
 # -----------------------------
 # Nodes (Steps)
 # -----------------------------
-
 def search_tavily_node(state: State):
-   
     tavily_api_key = os.getenv("TAVILY_API_KEY")
-
-    tool = TavilySearchResults(api_key=tavily_api_key)  
+    tool = TavilySearchResults(api_key=tavily_api_key)
     response_json = tool.invoke({"query": state["query"], "k": 5})
-    
     return {"search_results": response_json}
 
 def pick_best_articles_node(state: State):
     response_str = json.dumps(state["search_results"])
-    template = """ 
-      You are a world class journalist, researcher, and developer.
-      
-      QUERY RESPONSE:{response_str}
-      
-      Above is the list of search results for the query {query}.
-      
-      Please choose the best 3 articles from the list and return ONLY an array of the urls.  
-      Do not include anything else. 
-      If invalid, return ["https://www.google.com"].
-    """
-    prompt_template = PromptTemplate(
-        input_variables=["response_str", "query"],
-        template=template
-    )
-    urls = llm.invoke(prompt_template.format(response_str=response_str, query=state["query"]))
+    
+    messages = [
+        {
+            "role": "system",
+            "content": "You are a world-class journalist, researcher, and developer."
+        },
+        {
+            "role": "user",
+            "content": f"""
+QUERY RESPONSE: {response_str}
+
+Above is the list of search results for the query {state['query']}.
+
+Please choose the best 3 articles from the list and return ONLY an array of URLs.
+Do not include anything else.
+If invalid, return ["https://www.google.com"].
+"""
+        }
+    ]
+    
+    urls_response = llm.invoke(messages)
+    
     try:
-        url_list = json.loads(urls.content)
+        url_list = json.loads(urls_response.content)
     except:
         url_list = ["https://www.google.com"]
+    
     print("✅ Picked URLs:", url_list)
     return {"urls": url_list}
-
-
-from langchain_community.vectorstores import FAISS
 
 def extract_content_node(state: State):
     loader = UnstructuredURLLoader(urls=state["urls"])
     data = loader.load()
+    
     text_splitter = CharacterTextSplitter(
         separator="\n", chunk_size=1000, chunk_overlap=200, length_function=len
     )
+    
     docs = text_splitter.split_documents(data)
-    db = FAISS.from_documents(docs, embeddings) 
+    db = FAISS.from_documents(docs, embeddings)
     return {"db": db}
-
 
 def summarizer_node(state: State):
     docs = state["db"].similarity_search(state["query"], k=4)
     docs_page_content = " ".join([d.page_content for d in docs])
+    
+    messages = [
+        {
+            "role": "system",
+            "content": "You are a professional newsletter writer."
+        },
+        {
+            "role": "user",
+            "content": f"""
+{docs_page_content}
 
-    template = """
-       {docs}
-        Summarize the above text into a short newsletter about {query}.
-        Format it like Tim Ferriss' "5-Bullet Friday".
-    """
-    prompt_template = PromptTemplate(input_variables=["docs", "query"], template=template)
-    summary = llm.invoke(prompt_template.format(docs=docs_page_content, query=state["query"]))
-    return {"summaries": summary.content.strip()}
-
+Summarize the above text into a short newsletter about {state['query']}.
+Format it like Tim Ferriss' "5-Bullet Friday".
+"""
+        }
+    ]
+    
+    summary_response = llm.invoke(messages)
+    return {"summaries": summary_response.content.strip()}
 
 def generate_newsletter_node(state: State):
-    template = """
-    {summaries_str}
-        Write a newsletter about {query} in an engaging and informal style,
-        starting with:
-        "Hi All!
-         Here is your weekly dose of the Tech Newsletter..."
-         
-        End with:
-        Umaima Asif
-        - Learner 
-    """
-    prompt_template = PromptTemplate(
-        input_variables=["summaries_str", "query"], template=template
-    )
-    newsletter = llm.invoke(
-        prompt_template.format(summaries_str=state["summaries"], query=state["query"])
-    )
-    return {"newsletter": newsletter.content.strip()}
+    messages = [
+        {
+            "role": "system",
+            "content": "You are an engaging and informal newsletter writer."
+        },
+        {
+            "role": "user",
+            "content": f"""
+{state['summaries']}
+
+Write a newsletter about {state['query']} in an engaging and informal style, starting with:
+Hi All!
+Here is your weekly dose of the Tech Newsletter...
+
+End with:
+Umaima Asif
+- Learner
+"""
+        }
+    ]
+    
+    newsletter_response = llm.invoke(messages)
+    return {"newsletter": newsletter_response.content.strip()}
 
 # -----------------------------
 # Build the LangGraph
