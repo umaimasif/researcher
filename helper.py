@@ -22,7 +22,7 @@ google_api_key = os.getenv("GOOGLE_API_KEY")
 
 # Embeddings and LLM
 embeddings = GoogleGenerativeAIEmbeddings(api_key=google_api_key, model="models/embedding-001")
-llm = ChatGoogleGenerativeAI(api_key=google_api_key, model="models/gemini-2.5-flash-lite", temperature=0)
+llm = ChatGoogleGenerativeAI(api_key=google_api_key, model="models/gemini-2.5-flash-lite", temperature=0,convert_system_message_to_human=True)
 
 # -----------------------------
 # State Definition
@@ -165,6 +165,7 @@ if __name__ == "__main__":
     query = "Latest AI breakthroughs in healthcare"
     final_state = app.invoke({"query": query})
     print("\n📩 Final Newsletter:\n", final_state["newsletter"])
+
 
 
 
