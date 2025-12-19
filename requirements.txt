@@ -9,10 +9,11 @@ langgraph==0.0.44
 sentence-transformers==2.2.2
 transformers==4.36.2
 torch==2.1.2
-
+langchain_google_genai
 datasets==2.14.4
 pyarrow==12.0.1
 faiss-cpu==1.7.4
+
 
 
 
