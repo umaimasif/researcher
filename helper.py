@@ -4,7 +4,8 @@ from dotenv import load_dotenv
 from langchain_community.tools.tavily_search import TavilySearchResults
 from langchain_community.document_loaders import WebBaseLoader
 from langchain_community.vectorstores import FAISS
-from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
+from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_community.embeddings import HuggingFaceEmbeddings
 from langgraph.graph import StateGraph, END
 from typing import TypedDict, List
 try:
@@ -21,7 +22,9 @@ load_dotenv()
 google_api_key = os.getenv("GOOGLE_API_KEY")
 
 # Embeddings and LLM
-embeddings = GoogleGenerativeAIEmbeddings(api_key=google_api_key, model="models/embedding-001")
+embeddings = HuggingFaceEmbeddings(
+    model_name="all-MiniLM-L6-v2"
+)
 llm = ChatGoogleGenerativeAI(api_key=google_api_key, model="models/gemini-2.5-flash-lite", temperature=0,convert_system_message_to_human=True)
 
 # -----------------------------
@@ -164,6 +167,7 @@ if __name__ == "__main__":
     query = "Latest AI breakthroughs in healthcare"
     final_state = app.invoke({"query": query})
     print("\n📩 Final Newsletter:\n", final_state["newsletter"])
+
 
 
 
