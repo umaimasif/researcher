@@ -12,6 +12,9 @@ tavily-python
 chromadb
 beautifulsoup4
 lxml
+sentence-transformers
+
+
 
 
 
