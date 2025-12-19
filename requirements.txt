@@ -1,18 +1,19 @@
-python-dotenv==1.0.1
-streamlit==1.28.0
-rich==13.9.4
+python-dotenv
+streamlit
+rich
 
-langchain==0.1.20
+langchain
 langchain-community
-langgraph==0.0.44
+langgraph
 
-sentence-transformers==2.2.2
-transformers==4.36.2
-torch==2.1.2
+sentence-transformers
+transformers
+torch
 langchain_google_genai
-datasets==2.14.4
-pyarrow==12.0.1
-faiss-cpu==1.7.4
+datasets
+pyarrow
+faiss-cpu
+
 
 
 
