@@ -3,7 +3,7 @@ streamlit==1.28.0
 rich==13.9.4
 
 langchain==0.1.20
-langchain-community==0.0.38
+langchain-community
 langgraph==0.0.44
 
 sentence-transformers==2.2.2
@@ -13,6 +13,7 @@ langchain_google_genai
 datasets==2.14.4
 pyarrow==12.0.1
 faiss-cpu==1.7.4
+
 
 
 
