@@ -77,9 +77,8 @@ If invalid, return ["https://www.google.com"].
     return {"urls": url_list}
 
 def extract_content_node(state: State):
-    loader = UnstructuredURLLoader(urls=state["urls"])
-    data = loader.load()
-    
+    loader = WebBaseLoader(state["urls"])
+    docs = loader.load()
     text_splitter = CharacterTextSplitter(
         separator="\n", chunk_size=1000, chunk_overlap=200, length_function=len
     )
@@ -165,6 +164,7 @@ if __name__ == "__main__":
     query = "Latest AI breakthroughs in healthcare"
     final_state = app.invoke({"query": query})
     print("\n📩 Final Newsletter:\n", final_state["newsletter"])
+
 
 
 
