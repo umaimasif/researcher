@@ -3,8 +3,12 @@ import json
 import re
 from dotenv import load_dotenv
 
-# Updated Imports to match your logs
-from langchain_tavily import TavilySearchResults
+# Updated Imports
+try:
+    from langchain_community.tools.tavily_search import TavilySearchResults
+except ImportError:
+    from langchain_tavily import TavilySearchResults
+
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_groq import ChatGroq
 from langchain_community.vectorstores import FAISS
@@ -20,10 +24,10 @@ except ImportError:
 
 load_dotenv()
 
-# Fix for the USER_AGENT warning in your logs
+# Fix for identification
 os.environ["USER_AGENT"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
 
-# Embeddings using the updated package
+# Embeddings
 embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
 
 # LLM setup using Groq
@@ -48,23 +52,30 @@ class State(TypedDict):
 # Nodes (Steps)
 # -----------------------------
 def search_tavily_node(state: State):
-    # Updated tool initialization
-    tool = TavilySearchResults(api_key=os.getenv("TAVILY_API_KEY"))
-    response_json = tool.invoke({"query": state["query"], "k": 5})
-    return {"search_results": response_json}
+    # This initialization is more robust for current LangChain versions
+    tavily_api_key = os.getenv("TAVILY_API_KEY")
+    tool = TavilySearchResults(api_key=tavily_api_key, k=5)
+    
+    # Use the tool to search
+    response = tool.invoke(state["query"])
+    return {"search_results": response}
 
 def pick_best_articles_node(state: State):
+    # Groq handles JSON extraction very well
     response_str = json.dumps(state["search_results"])
-    prompt = f"QUERY RESPONSE: {response_str}\n\nReturn ONLY a raw JSON array of the top 3 URLs for: {state['query']}"
+    prompt = f"QUERY RESPONSE: {response_str}\n\nReturn ONLY a raw JSON array of the top 3 URLs for: {state['query']}. Example: [\"https://url1.com\", \"https://url2.com\"]"
     
     urls_response = llm.invoke(prompt)
     clean_content = re.sub(r"```json|```", "", urls_response.content).strip()
     
     try:
         url_list = json.loads(clean_content)
+        # Ensure it's a list
+        if not isinstance(url_list, list):
+            url_list = [url_list]
     except:
         url_list = ["https://www.google.com"]
-    return {"urls": url_list}
+    return {"urls": url_list[:3]}
 
 def extract_content_node(state: State):
     loader = WebBaseLoader(
@@ -74,18 +85,22 @@ def extract_content_node(state: State):
     data = loader.load()
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
     docs = text_splitter.split_documents(data)
+    
+    # Create the vector store
     db = FAISS.from_documents(docs, embeddings)
     return {"db": db}
 
 def summarizer_node(state: State):
+    # Get relevant docs from FAISS
     docs = state["db"].similarity_search(state["query"], k=4)
     docs_page_content = " ".join([d.page_content for d in docs])
-    prompt = f"{docs_page_content}\n\nSummarize into a short newsletter about {state['query']} in '5-Bullet Friday' style."
+    
+    prompt = f"Context: {docs_page_content}\n\nSummarize into a 5-bullet newsletter about {state['query']}."
     summary_response = llm.invoke(prompt)
     return {"summaries": summary_response.content.strip()}
 
 def generate_newsletter_node(state: State):
-    prompt = f"{state['summaries']}\n\nWrite a newsletter about {state['query']} starting with 'Hi All! Here is your weekly dose...' and ending with 'Umaima Asif - Learner'"
+    prompt = f"Summary: {state['summaries']}\n\nWrite an engaging newsletter about {state['query']}. Start with 'Hi All! Here is your weekly dose...' and end with 'Umaima Asif - Learner'"
     newsletter_response = llm.invoke(prompt)
     return {"newsletter": newsletter_response.content.strip()}
 
