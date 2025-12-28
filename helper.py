@@ -3,12 +3,6 @@ import json
 import re
 from dotenv import load_dotenv
 
-# Updated Imports
-try:
-    from langchain_community.tools.tavily_search import TavilySearchResults
-except ImportError:
-    from langchain_tavily import TavilySearchResults
-
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_groq import ChatGroq
 from langchain_community.vectorstores import FAISS
@@ -23,7 +17,7 @@ except ImportError:
     from langchain.text_splitter import RecursiveCharacterTextSplitter
 
 load_dotenv()
-
+os.environ["USER_AGENT"] = "MyNewsletterBot/1.0"
 # Fix for identification
 os.environ["USER_AGENT"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
 
@@ -51,15 +45,15 @@ class State(TypedDict):
 # -----------------------------
 # Nodes (Steps)
 # -----------------------------
+# Updated Import
+from langchain_tavily import TavilySearch
 def search_tavily_node(state: State):
-    # This initialization is more robust for current LangChain versions
+    # FIX: Using the new TavilySearch class as recommended
     tavily_api_key = os.getenv("TAVILY_API_KEY")
-    tool = TavilySearchResults(api_key=tavily_api_key, k=5)
-    
-    # Use the tool to search
+
+    tool = TavilySearch(api_key=tavily_api_key, max_results=5)
     response = tool.invoke(state["query"])
     return {"search_results": response}
-
 def pick_best_articles_node(state: State):
     # Groq handles JSON extraction very well
     response_str = json.dumps(state["search_results"])
@@ -122,3 +116,4 @@ workflow.add_edge("summarizer", "generate_newsletter")
 workflow.add_edge("generate_newsletter", END)
 
 app = workflow.compile()
+
