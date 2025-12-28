@@ -1,22 +1,16 @@
 python-dotenv
 streamlit
 rich
-
 langchain
 langchain-community
+langchain-text-splitters
 langgraph
-
 sentence-transformers
 transformers
 torch
-langchain_google_genai
-datasets
-pyarrow
+langchain-google-genai
 faiss-cpu
-
-
-
-
+beautifulsoup4
 
 
 
