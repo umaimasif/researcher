@@ -13,20 +13,21 @@ def main():
         layout="wide"
     )
     
+    # Keeping your header as requested
     st.header("Search, Discover & Explore Anything 🔍✨")
     query = st.text_input("Enter a topic...")
 
     if query:
         with st.spinner(f"Searching for '{query}'..."):
-            # Run the LangGraph workflow
             try:
+                # Run the LangGraph workflow
                 final_state = app.invoke({"query": query})
             except Exception as e:
                 st.error(f"Error running workflow: {e}")
                 return
 
             # Extract results
-            search_results = final_state.get("search_results", {})
+            search_results = final_state.get("search_results", [])
             urls = final_state.get("urls", [])
             summaries = final_state.get("summaries", "")
             newsletter_thread = final_state.get("newsletter", "")
@@ -48,5 +49,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
