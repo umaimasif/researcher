@@ -2,15 +2,17 @@ import os
 import json
 import re
 from dotenv import load_dotenv
-from langchain_community.tools.tavily_search import TavilySearchResults
-from langchain_community.document_loaders import WebBaseLoader
+
+# Updated Imports to match your logs
+from langchain_tavily import TavilySearchResults
+from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_groq import ChatGroq
 from langchain_community.vectorstores import FAISS
-from langchain_groq import ChatGroq  # Changed from Google to Groq
-from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_community.document_loaders import WebBaseLoader
 from langgraph.graph import StateGraph, END
 from typing import TypedDict, List
 
-# Fix for the import error you saw earlier
+# Standardizing the text splitter import
 try:
     from langchain_text_splitters import RecursiveCharacterTextSplitter
 except ImportError:
@@ -18,13 +20,13 @@ except ImportError:
 
 load_dotenv()
 
-# Identification for web requests
+# Fix for the USER_AGENT warning in your logs
 os.environ["USER_AGENT"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
 
-# Embeddings
+# Embeddings using the updated package
 embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
 
-# FIX: Switch to Groq (using Llama 3 for high speed and accuracy)
+# LLM setup using Groq
 llm = ChatGroq(
     groq_api_key=os.getenv("GROQ_API_KEY"),
     model_name="llama-3.3-70b-versatile",
@@ -43,9 +45,10 @@ class State(TypedDict):
     newsletter: str
 
 # -----------------------------
-# Nodes (Steps) - Logic stays the same, just better reliability
+# Nodes (Steps)
 # -----------------------------
 def search_tavily_node(state: State):
+    # Updated tool initialization
     tool = TavilySearchResults(api_key=os.getenv("TAVILY_API_KEY"))
     response_json = tool.invoke({"query": state["query"], "k": 5})
     return {"search_results": response_json}
@@ -64,7 +67,10 @@ def pick_best_articles_node(state: State):
     return {"urls": url_list}
 
 def extract_content_node(state: State):
-    loader = WebBaseLoader(state["urls"])
+    loader = WebBaseLoader(
+        state["urls"],
+        header_template={'User-Agent': os.environ["USER_AGENT"]}
+    )
     data = loader.load()
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
     docs = text_splitter.split_documents(data)
