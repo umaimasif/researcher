@@ -9,8 +9,10 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langgraph.graph import StateGraph, END
 from typing import TypedDict, List
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-
+try:
+    from langchain_text_splitters import RecursiveCharacterTextSplitter
+except ImportError:
+    from langchain.text_splitter import RecursiveCharacterTextSplitter
 # -----------------------------
 # Environment Setup
 # -----------------------------
@@ -114,3 +116,4 @@ workflow.add_edge("summarizer", "generate_newsletter")
 workflow.add_edge("generate_newsletter", END)
 
 app = workflow.compile()
+
