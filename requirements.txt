@@ -8,9 +8,10 @@ langgraph
 sentence-transformers
 transformers
 torch
-langchain-google-genai
+langchain-groq
 faiss-cpu
 beautifulsoup4
+
 
 
 
